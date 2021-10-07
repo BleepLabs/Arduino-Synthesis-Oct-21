@@ -1,6 +1,8 @@
+//Making an LFO, a slowly changing variable, that modulates the brightness of the LED 
+
 unsigned long current_time = 0;
 unsigned long prev_time = 0 ;
-float led_state = 1;
+int led_state;
 int rate_pot;
 int bright_pot;
 int raw_pot;
@@ -33,7 +35,7 @@ void loop() {
       latch1 = 0;
     }
 
-    // wehn it hits the bottom the latch is chnaged to 1
+    // wehn it hits the bottom the latch is changed to 1
     if (led_state < 1) {
       led_state = 1;
       latch1 = 1;

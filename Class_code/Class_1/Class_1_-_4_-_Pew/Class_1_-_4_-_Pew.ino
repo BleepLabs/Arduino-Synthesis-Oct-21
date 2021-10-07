@@ -21,8 +21,6 @@ AudioConnection          patchCord5(mixer1, 0, i2s1, 1);
 AudioControlSGTL5000     sgtl5000_1;     //xy=480,254
 // GUItool: end automatically generated code
 
-//initlaization
-// just variables
 unsigned long current_time = 0;
 unsigned long prev_time = 0 ;
 float led_state = 1;

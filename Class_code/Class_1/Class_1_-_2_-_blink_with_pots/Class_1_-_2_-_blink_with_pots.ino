@@ -17,7 +17,7 @@ void loop() {
 
   rate_pot = analogRead(A10); //returns 0-1023
   raw_pot = analogRead(A11);
-  //analogread is 0-123 while analogWrite is only 0-255 so we map it
+  //analogRead is 0-123 while analogWrite is only 0-255 so we map it
   bright_pot = map(raw_pot, 0, 1023, 0, 255); //https://www.arduino.cc/reference/en/language/functions/math/map/
 
   //timing if
