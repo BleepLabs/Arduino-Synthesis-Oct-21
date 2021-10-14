@@ -1,3 +1,5 @@
+//Class 2 starting point for using the bleep base controls and LED
+// info on all the functions here https://github.com/BleepLabs/Arduino-Synthesis-Oct-21/wiki/Class-2-cheat-sheet
 
 #include "bleep_base.h" //Contains functions we'll need when using the bleep base
 

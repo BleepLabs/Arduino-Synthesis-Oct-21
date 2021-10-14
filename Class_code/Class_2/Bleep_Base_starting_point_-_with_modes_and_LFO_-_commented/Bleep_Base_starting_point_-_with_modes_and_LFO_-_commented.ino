@@ -1,3 +1,4 @@
+//control the brightness of the LEDs with an LFO
 
 #include "bleep_base.h" //Contains functions we'll need when using the bleep base
 
@@ -30,7 +31,7 @@ void loop() {
     if (mode > 2) {
       mode = 0;
     }
-    Serial.println(mode); //new line after printing the input
+    Serial.println(mode);
   }
 
   if (buttons[1].fell()) {
@@ -43,14 +44,13 @@ void loop() {
   if (buttons[0].rose()) {
 
   }
-  if (buttons[0].read() == 0) { //0 is pressed,  1 is not pressed
+  if (buttons[0].read() == 0) {
 
   }
 
   hue = potRead(0); //0-1.0
-  //hue = 1.0-(analogRead(A10)/1023.0);
-  //lfo_f = lfo / 255.0;
-  lfo_f = map(float(lfo), 0, 255, 0, 1.0); //only woks if input is a float
+  //map(input, input low,input high,output low,outout high)
+  lfo_f = map(float(lfo), 0, 255, 0, 1.0); //only works if input is a float so float(lfo) turns it into one. Or we could just make it float lfo in the initialization section
   bright = lfo_f * potRead(1); //0-1.0
   saturation = potRead(2);
 
@@ -86,6 +86,9 @@ void loop() {
   if (current_time - prev_time[1] > 10) {
     prev_time[1] = current_time;
     Serial.println(lfo);
+
+    //copied from the first class code
+    // It was going from 0-255 since it was for analogWrite but I kept is and mapped the output up at line 52
 
     if (lfo_mode == 1) {
       lfo += 1;
