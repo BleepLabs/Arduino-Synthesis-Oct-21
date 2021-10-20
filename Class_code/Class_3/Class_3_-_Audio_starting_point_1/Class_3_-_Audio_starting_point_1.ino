@@ -31,6 +31,9 @@ float freq2;
 float amp1,amp2; //you can also declare variables like this. Both will be floats
 
 void setup() {
+
+  start_bleep_base(); //Gets the LEDs, pots, and buttons ready
+  
   //there's a lot we need to do in setup now but most of it is just copy paste.
   // This first group should only be done in setup how much RAM to set aside for the audio library to use.
   // The audio library uses blocks of a set size so this is not a percentage or kilobytes, just a kind of arbitrary number.
