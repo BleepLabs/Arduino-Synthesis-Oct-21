@@ -1,3 +1,4 @@
+//Adding a final volume control 
 //Using the Teensy audio library to make sound
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/

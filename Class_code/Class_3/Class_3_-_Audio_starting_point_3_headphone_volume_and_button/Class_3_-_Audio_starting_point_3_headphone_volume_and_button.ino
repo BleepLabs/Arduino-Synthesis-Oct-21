@@ -1,4 +1,6 @@
-//Using the Teensy audio library to make sound
+//Sound only outputs when left most button is pressed
+// Filter is controlled with pot 2
+
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -116,7 +118,7 @@ void loop() {
   amplitude2 = potRead(5) * .5;
   mixer1.gain(1, amplitude2);
 
-  amp1.gain(potRead(3)*gate1);
+  amp1.gain(potRead(3)*gate1);  //when gate is 0 , amp is turned all the way down. 
 
   cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
   filter1.frequency(cuttoff_freq);

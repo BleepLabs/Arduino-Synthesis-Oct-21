@@ -1,4 +1,7 @@
-//Using the Teensy audio library to make sound
+//Sound only outputs when left most button is pressed
+// Filter cuttof frequency is controlled with pot 2
+// filter resonance is controlled with pot 6
+// LFO modulates cutoff freq. Pot 4 is amount, pot 5 is rate
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -121,29 +124,24 @@ void loop() {
   freq2 = (potRead(1) * 500.0) + 100.0;
   waveform2.frequency(freq2);
 
-  //amplitude1 = potRead(4) * .4; //returns 0-1.0 already
-  mixer1.gain(0, .22); //channel 0-3, gain 0-1.0 for attenuation, over 1 for amplification
-
-  //amplitude2 = potRead(5) * .4;
+  mixer1.gain(0, .22); //resonance adds a lot of volume to a small band of frequencies so we need to turn the input into it down 
   mixer1.gain(1, .22);
 
   amp1.gain(potRead(3));
 
-  cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
+  cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0); //crazy noise over 15000
   filter1.frequency(cuttoff_freq);
 
-  resonance_control = map(potRead(6), 0, 1.0, .7, 5.0);
+  resonance_control = map(potRead(6), 0, 1.0, .7, 5.0); //resonance is from .7 to 5.0
   filter1.resonance(resonance_control);
 
-  waveform3.amplitude(potRead(4));
-  waveform3.frequency(potRead(5) * 10.0);
+  //LFO that also controls cutoff freq
+  waveform3.amplitude(potRead(4)); //amount
+  waveform3.frequency(potRead(5) * 10.0);  //frequency
 
   if (current_time - prev_time[0] > 500) {
     prev_time[0] = current_time;
 
-    Serial.print(amplitude1);
-    Serial.print(" ");
-    Serial.println(amplitude2);
     //Here we print out the usage of the audio library
     // If we go over 90% processor usage or get near the value of memory blocks we set aside in the setup we'll have issues or crash.
     // If you're using too many block, jut increase the number up top until you're over it by a couple

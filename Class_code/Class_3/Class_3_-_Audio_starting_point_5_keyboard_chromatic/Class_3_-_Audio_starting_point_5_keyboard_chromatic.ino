@@ -1,4 +1,4 @@
-//Using the Teensy audio library to make sound
+//Keys play different notes using an envelope
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -43,6 +43,8 @@ float cuttoff_freq;
 int gate1;
 float resonance_control;
 
+//const means it's stores in program memory, not RAM
+// all the frequencies on a full sized piano.
 const float chromatic[88] = {55.00000728, 58.27047791, 61.73542083, 65.40639999, 69.29566692, 73.4162017, 77.78175623, 82.40690014, 87.30706942, 92.49861792, 97.99887197, 103.8261881, 110.0000146, 116.5409558, 123.4708417, 130.8128, 138.5913338, 146.8324034, 155.5635124, 164.8138003, 174.6141388, 184.9972358, 195.9977439, 207.6523763, 220.0000291, 233.0819116, 246.9416833, 261.6255999, 277.1826676, 293.6648067, 311.1270248, 329.6276005, 349.2282776, 369.9944716, 391.9954878, 415.3047525, 440.0000581, 466.1638231, 493.8833665, 523.2511997, 554.3653352, 587.3296134, 622.2540496, 659.2552009, 698.4565551, 739.9889431, 783.9909755, 830.6095048, 880.0001162, 932.3276461, 987.7667329, 1046.502399, 1108.73067, 1174.659227, 1244.508099, 1318.510402, 1396.91311, 1479.977886, 1567.981951, 1661.219009, 1760.000232, 1864.655292, 1975.533466, 2093.004798, 2217.46134, 2349.318453, 2489.016198, 2637.020803, 2793.82622, 2959.955772, 3135.963901, 3322.438019, 3520.000464, 3729.310584, 3951.066931, 4186.009596, 4434.92268, 4698.636906, 4978.032395, 5274.041605, 5587.652439, 5919.911543, 6271.927802, 6644.876037, 7040.000927, 7458.621167, 7902.133861, 8372.019192};
 
 void setup() {
@@ -98,10 +100,11 @@ void setup() {
   //the other channels of the mixer aren't used so don't need to be set
   //This really isn't necessary since we're changing them in the loop but it's here for reference
 
-  envelope1.attack(10);
-  envelope1.decay(1000);
-  envelope1.sustain(1);
-  envelope1.release(100);
+  //envelope info https://www.pjrc.com/teensy/gui/?info=AudioEffectEnvelope
+  envelope1.attack(10); //time in milliseconds
+  envelope1.decay(1000); //time in milliseconds
+  envelope1.sustain(1); //amplitude 0-1.0
+  envelope1.release(1000);//time in milliseconds
 } //setup is over
 
 void loop() {
@@ -109,29 +112,26 @@ void loop() {
   for (int i = 0; i < 8; i = i + 1)  {
     buttons[i].update();
 
-    if (buttons[i].fell()) {
-      envelope1.noteOn();
-      freq1 = chromatic[(i * 2) + 40];
-      freq2 = freq1 * 2.0;
-      //freq2 = chromatic[(i * 2) + 43];
+    if (buttons[i].fell()) { //if ANY button fell..
+      
+      freq1 = chromatic[i + 30]; //set the frequency using the button's "i"
+      //freq2 = freq1 * .501;
+      freq2 = chromatic[i + 35];
       waveform1.frequency(freq1);
       waveform2.frequency(freq2);
+
+      envelope1.noteOn(); //start the attack section of the envelope
     }
     if (buttons[i].rose()) {
-      envelope1.noteOff();
+      envelope1.noteOff(); //end the sustain section and start the release 
     }
   }
 
   // freq1 = (potRead(0) * 500.0) + 100.0; //add and multiply by floats to make sure the output is a float
-  //change the pitch of the oscillator
-
   // freq2 = (potRead(1) * 500.0) + 100.0;
 
 
-  //amplitude1 = potRead(4) * .4; //returns 0-1.0 already
-  mixer1.gain(0, .22); //channel 0-3, gain 0-1.0 for attenuation, over 1 for amplification
-
-  //amplitude2 = potRead(5) * .4;
+  mixer1.gain(0, .22); //resonance adds a lot of volume to a small band of frequencies so we need to turn the input into it down 
   mixer1.gain(1, .22);
 
   amp1.gain(potRead(3));
@@ -148,9 +148,6 @@ void loop() {
   if (current_time - prev_time[0] > 500) {
     prev_time[0] = current_time;
 
-    Serial.print(amplitude1);
-    Serial.print(" ");
-    Serial.println(amplitude2);
     //Here we print out the usage of the audio library
     // If we go over 90% processor usage or get near the value of memory blocks we set aside in the setup we'll have issues or crash.
     // If you're using too many block, jut increase the number up top until you're over it by a couple
