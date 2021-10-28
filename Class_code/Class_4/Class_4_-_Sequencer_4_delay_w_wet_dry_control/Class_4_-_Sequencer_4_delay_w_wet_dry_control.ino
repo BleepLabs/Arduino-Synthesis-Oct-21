@@ -1,5 +1,16 @@
-//Keys play different notes using an envelope
-// Pot0 controls key to play at all times
+/*
+ key 0 plays the noise sound
+ key 1 starts and stops the sequence 
+ pot 0 feedback
+ pot 1 seq rate
+ pot 2 filter cutoff
+ pot 3 out volume
+ pot 4 lfo amount
+ pot 5 lfo rate
+ pot 6 wet dry
+ pot 7 delay time 
+
+*/ 
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -10,22 +21,22 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioSynthWaveform       waveform1;      //xy=105.00569152832031,143
-AudioSynthWaveform       waveform2;      //xy=105.00569152832031,191
-AudioSynthNoiseWhite     noise1;         //xy=113,244
-AudioMixer4              mixer1;         //xy=312.0057067871094,182
-AudioSynthWaveform       waveform3;      //xy=321.0056915283203,337
-AudioSynthSimpleDrum     drum1;          //xy=353,404
-AudioSynthSimpleDrum     drum2;          //xy=369,450
-AudioFilterStateVariable filter1;        //xy=471.0057067871094,210
-AudioMixer4              mixer2;         //xy=544,328
-AudioEffectEnvelope      envelope1;      //xy=629.0056762695312,218
-AudioEffectDelay         delay1;         //xy=730,496
-AudioMixer4              delay_mixer;         //xy=742,386
-AudioMixer4              wet_dry_mixer;         //xy=912,297
-AudioEffectFreeverb      freeverb1;      //xy=915,459
-AudioAmplifier           amp1;           //xy=1082,277
-AudioOutputI2S           i2s1;           //xy=1117.005615234375,343
+AudioSynthWaveform       waveform1;      //xy=105.00569152832031,135
+AudioSynthWaveform       waveform2;      //xy=105.00569152832031,183
+AudioSynthNoiseWhite     noise1;         //xy=113,236
+AudioMixer4              mixer1;         //xy=312.0057067871094,174
+AudioSynthWaveform       waveform3;      //xy=321.0056915283203,329
+AudioSynthSimpleDrum     drum1;          //xy=353,396
+AudioSynthSimpleDrum     drum2;          //xy=369,442
+AudioSynthKarplusStrong  string1;        //xy=386,496
+AudioFilterStateVariable filter1;        //xy=471.0057067871094,202
+AudioMixer4              mixer2;         //xy=540,310
+AudioEffectEnvelope      envelope1;      //xy=629.0056762695312,210
+AudioEffectDelay         delay1;         //xy=732,539
+AudioMixer4              delay_mixer;         //xy=745,387
+AudioMixer4              wet_dry_mixer;         //xy=872,268
+AudioAmplifier           amp1;           //xy=1082,269
+AudioOutputI2S           i2s1;           //xy=1117.005615234375,335
 AudioConnection          patchCord1(waveform1, 0, mixer1, 0);
 AudioConnection          patchCord2(waveform2, 0, mixer1, 1);
 AudioConnection          patchCord3(noise1, 0, mixer1, 2);
@@ -33,22 +44,19 @@ AudioConnection          patchCord4(mixer1, 0, filter1, 0);
 AudioConnection          patchCord5(waveform3, 0, filter1, 1);
 AudioConnection          patchCord6(drum1, 0, mixer2, 1);
 AudioConnection          patchCord7(drum2, 0, mixer2, 2);
-AudioConnection          patchCord8(filter1, 0, envelope1, 0);
-AudioConnection          patchCord9(mixer2, 0, wet_dry_mixer, 0);
+AudioConnection          patchCord8(string1, 0, mixer2, 3);
+AudioConnection          patchCord9(filter1, 0, envelope1, 0);
 AudioConnection          patchCord10(mixer2, 0, delay_mixer, 0);
-AudioConnection          patchCord11(envelope1, 0, mixer2, 0);
-AudioConnection          patchCord12(delay1, 0, delay_mixer, 1);
-AudioConnection          patchCord13(delay1, 1, freeverb1, 0);
-AudioConnection          patchCord14(delay_mixer, 0, wet_dry_mixer, 1);
-AudioConnection          patchCord15(delay_mixer, delay1);
+AudioConnection          patchCord11(mixer2, 0, wet_dry_mixer, 0);
+AudioConnection          patchCord12(envelope1, 0, mixer2, 0);
+AudioConnection          patchCord13(delay1, 0, delay_mixer, 1);
+AudioConnection          patchCord14(delay_mixer, delay1);
+AudioConnection          patchCord15(delay_mixer, 0, wet_dry_mixer, 1);
 AudioConnection          patchCord16(wet_dry_mixer, amp1);
-AudioConnection          patchCord17(freeverb1, 0, wet_dry_mixer, 2);
-AudioConnection          patchCord18(amp1, 0, i2s1, 0);
-AudioConnection          patchCord19(amp1, 0, i2s1, 1);
-AudioControlSGTL5000     sgtl5000_1;     //xy=978.0056762695312,94
+AudioConnection          patchCord17(amp1, 0, i2s1, 0);
+AudioConnection          patchCord18(amp1, 0, i2s1, 1);
+AudioControlSGTL5000     sgtl5000_1;     //xy=978.0056762695312,86
 // GUItool: end automatically generated code
-
-
 
 #include "bleep_base.h" //Contains functions we'll need when using the bleep base
 
@@ -72,7 +80,6 @@ int seq2[16] = {0, 0, 220, 0, 0, 0, 440, 0, 220, 0, 0, 0, 880, 0, 0, 0};
 int seq_index;
 int mod_offset;
 int mod_index;
-int seq_mode;
 
 void setup() {
 
@@ -83,7 +90,7 @@ void setup() {
   // The audio library uses blocks of a set size so this is not a percentage or kilobytes, just a kind of arbitrary number.
   // On our Teensy 4.1 we can go up to about 1900 but that won't leave any RAM for anyone else.
   // Most objects only need a single block. It's usually the delay and reverb that hog it.
-  AudioMemory(1000);
+  AudioMemory(400);
 
   sgtl5000_1.enable(); //Turn the adapter board on
   sgtl5000_1.inputSelect(AUDIO_INPUT_LINEIN); //Tell it what input we want to use. Not necessary is you're not using the ins
@@ -147,11 +154,9 @@ void setup() {
 
   delay1.delay(0, 500);
 
+
   delay_mixer.gain(0, .7); //from voice and drums
   delay_mixer.gain(1, .3); //feedback
-
-  freeverb1.roomsize(.5);
-  freeverb1.damping(.5);
 
 } //setup is over
 
@@ -159,24 +164,18 @@ void loop() {
   current_time = millis();
 
   delay_mixer.gain(1, potRead(0));
-  float dt = potRead(7) * 500.0;
-  delay1.delay(0, dt);
-  delay1.delay(1, dt * .8);
+  delay1.delay(0, potRead(7) * 500.0);
 
+  float dry = potRead(6);
+  float wet = map(dry, 0, 1.0, 1.0, 0); //or 1.0 - dry;
+  wet_dry_mixer.gain(0, dry); //signal straight from mixer 2, drums and noise voice
+  wet_dry_mixer.gain(1, wet); //output from delay mixer
 
-  float dry = map(potRead(6), 0, 1.0, .6, 0);
-  float wet = map(potRead(6), 0, 1.0, 0, .6);
-  wet_dry_mixer.gain(0, dry);
-  wet_dry_mixer.gain(1, wet);
-  wet_dry_mixer.gain(2, .4);
-
-  //int note_shift =  potRead(0) * 50.0;
-  int note_shift = 30;
   int seq1_rate =  potRead(1) * 500.0;
 
-  //mod_offset = potRead(7) * 15;
-  mod_offset = 7;
-
+  //this section not being used
+  //int note_shift =  potRead(0) * 50.0;
+  int note_shift = 30;
   freq1 = chromatic[note_shift + note_shift]; //set the frequency using the button's "i"
   freq2 = chromatic[note_sel + note_shift] * 2.0;
   waveform1.frequency(freq1);
@@ -184,29 +183,17 @@ void loop() {
 
   for (int i = 0; i < 8; i = i + 1)  {
     buttons[i].update();
-  }
 
-  if (buttons[0].fell()) {
-    envelope1.noteOn(); //start the attack section of the envelope
-  }
-  if (buttons[0].rose()) {
-    envelope1.noteOff(); //end the sustain section and start the release
-  }
-
-  if (buttons[1].fell()) {
-    seq_mode++;
-    if (seq_mode > 1) {
-      seq_mode = 0;
+    if (buttons[i].fell()) { //if ANY button fell..
+      note_sel = i;
+      envelope1.noteOn(); //start the attack section of the envelope
     }
-    if (seq_mode == 1) {
-      seq_index = 0;
-      prev_time[1] = 0;
+    if (buttons[i].rose()) {
+      envelope1.noteOff(); //end the sustain section and start the release
     }
-
   }
 
-
-
+  //this section is used
   amp1.gain(potRead(3));
 
   cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
@@ -222,28 +209,22 @@ void loop() {
   /////////////////////////////////////////////////////////////////sequencer
   if (current_time - prev_time[1] > seq1_rate) {
     prev_time[1] = current_time;
-    if (seq_mode == 1) {
-      if (seq1[seq_index] == 1) {
-        envelope1.noteOn();
-      }
+    seq_index = seq_index + 1;
 
-      if (seq2[seq_index] > 0) {
-        drum1.frequency(seq2[seq_index]);
-        drum1.noteOn();
-      }
-      else {
-        drum1.frequency(seq2[seq_index]);
-        drum1.noteOn();
-      }
-
-      seq_index = seq_index + 1;
-
-      if (seq_index > 15) {
-        seq_index = 0;
-      }
-
+    if (seq_index > 15) {
+      seq_index = 0;
     }
-    //Serial.println(mod_index);
+
+    if (seq1[seq_index] == 1) {
+      envelope1.noteOn();
+    }
+
+
+    if (seq2[seq_index] > 0) {
+      drum1.frequency(seq2[seq_index]);
+      drum1.noteOn();
+    }
+
   }
 
   if (current_time - prev_time[0] > 500) {

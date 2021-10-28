@@ -1,5 +1,5 @@
-//Keys play different notes using an envelope
-// Pot0 controls key to play at all times
+//Two arrays play two different sounds 
+// pot 1 is rate
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -56,7 +56,9 @@ int note_sel;
 // all the frequencies on a full sized piano.
 const float chromatic[88] = {55.00000728, 58.27047791, 61.73542083, 65.40639999, 69.29566692, 73.4162017, 77.78175623, 82.40690014, 87.30706942, 92.49861792, 97.99887197, 103.8261881, 110.0000146, 116.5409558, 123.4708417, 130.8128, 138.5913338, 146.8324034, 155.5635124, 164.8138003, 174.6141388, 184.9972358, 195.9977439, 207.6523763, 220.0000291, 233.0819116, 246.9416833, 261.6255999, 277.1826676, 293.6648067, 311.1270248, 329.6276005, 349.2282776, 369.9944716, 391.9954878, 415.3047525, 440.0000581, 466.1638231, 493.8833665, 523.2511997, 554.3653352, 587.3296134, 622.2540496, 659.2552009, 698.4565551, 739.9889431, 783.9909755, 830.6095048, 880.0001162, 932.3276461, 987.7667329, 1046.502399, 1108.73067, 1174.659227, 1244.508099, 1318.510402, 1396.91311, 1479.977886, 1567.981951, 1661.219009, 1760.000232, 1864.655292, 1975.533466, 2093.004798, 2217.46134, 2349.318453, 2489.016198, 2637.020803, 2793.82622, 2959.955772, 3135.963901, 3322.438019, 3520.000464, 3729.310584, 3951.066931, 4186.009596, 4434.92268, 4698.636906, 4978.032395, 5274.041605, 5587.652439, 5919.911543, 6271.927802, 6644.876037, 7040.000927, 7458.621167, 7902.133861, 8372.019192};
 
+
 int seq1[16] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0};
+//here we'll put frequencies to play on the drum object
 int seq2[16] = {0, 0, 220, 0, 0, 0, 440, 0, 220, 0, 0, 0, 880, 0, 0, 0};
 
 int seq_index;
@@ -101,14 +103,6 @@ void setup() {
 
   filter1.octaveControl(7);
 
-  //The mixer has four inputs we can change the volume of
-  // gain.(channel from 0 to 3, gain from 0.0 to a large number)
-  // A gain of 1 means the output is the same as the input.
-  // .5 would be half volume and 2 would be double
-  // -1.0 would mean the same volume but the signal is upside down, aka 180 degrees out of phase
-
-  //Since we have two oscillators coming in that are already "1" We should take them down by half so we don't clip.
-  // If you go over "1" The top or bottom of the wave is just slammed against a wall
   mixer1.gain(0, 0); //wave1
   mixer1.gain(1, 0); //wave2
   mixer1.gain(2, .3); //pink1
@@ -117,8 +111,6 @@ void setup() {
   mixer2.gain(1, .3); //drum1
   mixer2.gain(2, .3); //drum2
 
-  //the other channels of the mixer aren't used so don't need to be set
-  //This really isn't necessary since we're changing them in the loop but it's here for reference
 
   //envelope info https://www.pjrc.com/teensy/gui/?info=AudioEffectEnvelope
   envelope1.attack(1); //time in milliseconds
@@ -129,17 +121,19 @@ void setup() {
   noise1.amplitude(1);
 
   drum1.frequency(440);
-  drum1.length(250);
-  drum1.pitchMod(.2);
+  drum1.length(250); //how long it takes for the sound to fade out in milliseconds
+  drum1.pitchMod(.2); // above .5 the pitch increases, below it decreases. The farther from .5 the further the pitch goes
 
 } //setup is over
 
 void loop() {
   current_time = millis();
-  int note_shift =  potRead(0) * 50.0;
+
+
   int seq1_rate =  potRead(1) * 500.0;
 
-
+  //none of this is doing anything now
+  int note_shift =  potRead(0) * 50.0;
   freq1 = chromatic[note_shift + note_shift]; //set the frequency using the button's "i"
   freq2 = chromatic[note_sel + note_shift] * 2.0;
   waveform1.frequency(freq1);
@@ -157,14 +151,8 @@ void loop() {
     }
   }
 
-  // freq1 = (potRead(0) * 500.0) + 100.0; //add and multiply by floats to make sure the output is a float
-  // freq2 = (potRead(1) * 500.0) + 100.0;
-
-
-  //mixer1.gain(0, .22); //resonance adds a lot of volume to a small band of frequencies so we need to turn the input into it down
-  // mixer1.gain(1, .22);
-
-  amp1.gain(potRead(3));
+  //this part is still controlling things
+  amp1.gain(potRead(3)); 
 
   cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
   filter1.frequency(cuttoff_freq);
@@ -185,12 +173,12 @@ void loop() {
       seq_index = 0;
     }
 
-    if (seq1[seq_index] == 1) {
+    if (seq1[seq_index] == 1) {  //both sequences use the same seq_index
       envelope1.noteOn();
     }
 
-    if (seq2[seq_index] > 0) {
-      drum1.frequency(seq2[seq_index]);
+    if (seq2[seq_index] > 0) { //here the array has frequencies, not just 1 or 0
+      drum1.frequency(seq2[seq_index]); 
       drum1.noteOn();
     }
 

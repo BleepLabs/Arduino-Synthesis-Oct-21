@@ -92,12 +92,10 @@ void setup() {
   // .5 would be half volume and 2 would be double
   // -1.0 would mean the same volume but the signal is upside down, aka 180 degrees out of phase
 
-  //Since we have two oscillators coming in that are already "1" We should take them down by half so we don't clip.
-  // If you go over "1" The top or bottom of the wave is just slammed against a wall
-  mixer1.gain(0, .5);
-  mixer1.gain(1, .5);
-  //the other channels of the mixer aren't used so don't need to be set
-  //This really isn't necessary since we're changing them in the loop but it's here for reference
+
+  mixer1.gain(0, .22); //resonance adds a lot of volume to a small band of frequencies so we need to turn the input into it down
+  mixer1.gain(1, .22);
+
 
   //envelope info https://www.pjrc.com/teensy/gui/?info=AudioEffectEnvelope
   envelope1.attack(10); //time in milliseconds
@@ -110,7 +108,8 @@ void loop() {
   current_time = millis();
   int note_shift =  potRead(0) * 50.0;
 
-  freq1 = chromatic[note_shift + note_shift]; //set the frequency using the button's "i"
+  //we want to read the pot and update the frequency at all times so it's here in the "bottom" of the loop. No inside and other {}
+  freq1 = chromatic[note_shift + note_shift]; 
   freq2 = chromatic[note_sel + note_shift] * 2.0;
   waveform1.frequency(freq1);
   waveform2.frequency(freq2);
@@ -119,7 +118,7 @@ void loop() {
     buttons[i].update();
 
     if (buttons[i].fell()) { //if ANY button fell..
-      note_sel = i;
+      note_sel = i; //save what button this is to use with the frequency code above 
       envelope1.noteOn(); //start the attack section of the envelope
     }
     if (buttons[i].rose()) {
@@ -127,14 +126,8 @@ void loop() {
     }
   }
 
-  // freq1 = (potRead(0) * 500.0) + 100.0; //add and multiply by floats to make sure the output is a float
-  // freq2 = (potRead(1) * 500.0) + 100.0;
 
-
-  mixer1.gain(0, .22); //resonance adds a lot of volume to a small band of frequencies so we need to turn the input into it down
-  mixer1.gain(1, .22);
-
-  amp1.gain(potRead(3));
+  amp1.gain(potRead(3)); //final volume
 
   cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
   filter1.frequency(cuttoff_freq);

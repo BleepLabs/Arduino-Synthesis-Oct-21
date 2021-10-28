@@ -1,5 +1,17 @@
-//Keys play different notes using an envelope
-// Pot0 controls key to play at all times
+/*
+ keys play the noise sound
+ 
+ pot 0 feedback
+ pot 1 seq rate
+ pot 2 filter cutoff
+ pot 3 out volume
+ pot 4 lfo amount
+ pot 5 lfo rate
+ pot 6 filter resonance
+ pot 7 delay time 
+
+
+*/ 
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -19,13 +31,12 @@ AudioSynthSimpleDrum     drum1;          //xy=353,396
 AudioSynthSimpleDrum     drum2;          //xy=369,442
 AudioSynthKarplusStrong  string1;        //xy=386,496
 AudioFilterStateVariable filter1;        //xy=471.0057067871094,202
-AudioMixer4              mixer2;         //xy=540,310
 AudioEffectEnvelope      envelope1;      //xy=629.0056762695312,210
-AudioEffectDelay         delay1;         //xy=732,539
-AudioMixer4              delay_mixer;         //xy=745,387
-AudioMixer4              wet_dry_mixer;         //xy=872,268
-AudioAmplifier           amp1;           //xy=1082,269
-AudioOutputI2S           i2s1;           //xy=1117.005615234375,335
+AudioMixer4              mixer2;         //xy=662,310
+AudioEffectDelay         delay1;         //xy=830,452
+AudioMixer4              mixer3;         //xy=838,307
+AudioAmplifier           amp1;           //xy=987,288
+AudioOutputI2S           i2s1;           //xy=1139.005615234375,288
 AudioConnection          patchCord1(waveform1, 0, mixer1, 0);
 AudioConnection          patchCord2(waveform2, 0, mixer1, 1);
 AudioConnection          patchCord3(noise1, 0, mixer1, 2);
@@ -35,17 +46,18 @@ AudioConnection          patchCord6(drum1, 0, mixer2, 1);
 AudioConnection          patchCord7(drum2, 0, mixer2, 2);
 AudioConnection          patchCord8(string1, 0, mixer2, 3);
 AudioConnection          patchCord9(filter1, 0, envelope1, 0);
-AudioConnection          patchCord10(mixer2, 0, delay_mixer, 0);
-AudioConnection          patchCord11(mixer2, 0, wet_dry_mixer, 0);
-AudioConnection          patchCord12(envelope1, 0, mixer2, 0);
-AudioConnection          patchCord13(delay1, 0, delay_mixer, 1);
-AudioConnection          patchCord14(delay_mixer, delay1);
-AudioConnection          patchCord15(delay_mixer, 0, wet_dry_mixer, 1);
-AudioConnection          patchCord16(wet_dry_mixer, amp1);
-AudioConnection          patchCord17(amp1, 0, i2s1, 0);
-AudioConnection          patchCord18(amp1, 0, i2s1, 1);
+AudioConnection          patchCord10(envelope1, 0, mixer2, 0);
+AudioConnection          patchCord11(mixer2, 0, mixer3, 0);
+AudioConnection          patchCord12(delay1, 0, mixer3, 1);
+AudioConnection          patchCord13(mixer3, amp1);
+AudioConnection          patchCord14(mixer3, delay1);
+AudioConnection          patchCord15(amp1, 0, i2s1, 0);
+AudioConnection          patchCord16(amp1, 0, i2s1, 1);
 AudioControlSGTL5000     sgtl5000_1;     //xy=978.0056762695312,86
 // GUItool: end automatically generated code
+
+
+
 
 #include "bleep_base.h" //Contains functions we'll need when using the bleep base
 
@@ -141,32 +153,26 @@ void setup() {
   drum1.length(250);
   drum1.pitchMod(.2);
 
-  delay1.delay(0, 500);
+  delay1.delay(0, 500);  //channel 0, 500 millisecond long delau
 
-
-  delay_mixer.gain(0, .7); //from voice and drums
-  delay_mixer.gain(1, .3); //feedback
+  mixer3.gain(0, .7); //from voice and drums
+  mixer3.gain(1, .3); //feedback
 
 } //setup is over
 
 void loop() {
   current_time = millis();
 
-  delay_mixer.gain(1, potRead(0));
-  delay1.delay(0, potRead(7) * 500.0);
+  mixer3.gain(1, potRead(0)); //feedback control
+  delay1.delay(0, potRead(7) * 500.0); //delay length. It will make pops and scratches when changing
 
-  float dry = potRead(6);
-  float wet = map(dry, 0, 1.0, 1.0, 0); //or 1.0 - dry;
-  wet_dry_mixer.gain(0, dry);
-  wet_dry_mixer.gain(1, wet);
 
-  //int note_shift =  potRead(0) * 50.0;
-  int note_shift = 30;
   int seq1_rate =  potRead(1) * 500.0;
 
-  //mod_offset = potRead(7) * 15;
-  mod_offset = 7;
 
+  //not being used
+  //int note_shift =  potRead(0) * 50.0;
+  int note_shift = 30;
   freq1 = chromatic[note_shift + note_shift]; //set the frequency using the button's "i"
   freq2 = chromatic[note_sel + note_shift] * 2.0;
   waveform1.frequency(freq1);
@@ -184,13 +190,14 @@ void loop() {
     }
   }
 
+  //this section is used
   amp1.gain(potRead(3));
 
   cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
   filter1.frequency(cuttoff_freq);
 
-  //resonance_control = map(potRead(6), 0, 1.0, .7, 5.0);
-  filter1.resonance(3.0);
+  resonance_control = map(potRead(6), 0, 1.0, .7, 5.0);
+  filter1.resonance(resonance_control);
 
   waveform3.amplitude(potRead(4));
   waveform3.frequency(potRead(5) * 10.0);
@@ -209,17 +216,10 @@ void loop() {
       envelope1.noteOn();
     }
 
-
     if (seq2[seq_index] > 0) {
       drum1.frequency(seq2[seq_index]);
       drum1.noteOn();
     }
-    else {
-      mod_index = (seq_index + mod_offset) % 15;
-      drum1.frequency(seq2[mod_index]);
-      drum1.noteOn();
-    }
-    //Serial.println(mod_index);
   }
 
   if (current_time - prev_time[0] > 500) {

@@ -1,5 +1,17 @@
-//Keys play different notes using an envelope
-// Pot0 controls key to play at all times
+/*
+ key 0 plays the noise sound
+ key 1 starts and stops the sequence
+ pot 0 feedback
+ pot 1 seq rate
+ pot 2 filter cutoff
+ pot 3 out volume
+ pot 4 lfo amount
+ pot 5 lfo rate
+ pot 6 wet dry
+ pot 7 delay time
+
+
+*/
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -20,9 +32,10 @@ AudioSynthSimpleDrum     drum2;          //xy=369,450
 AudioFilterStateVariable filter1;        //xy=471.0057067871094,210
 AudioMixer4              mixer2;         //xy=544,328
 AudioEffectEnvelope      envelope1;      //xy=629.0056762695312,218
-AudioMixer4              delay_mixer;         //xy=747,419
-AudioEffectDelay         delay1;         //xy=747,532
+AudioEffectDelay         delay1;         //xy=730,496
+AudioMixer4              delay_mixer;         //xy=742,386
 AudioMixer4              wet_dry_mixer;         //xy=912,297
+AudioEffectFreeverb      freeverb1;      //xy=915,459
 AudioAmplifier           amp1;           //xy=1082,277
 AudioOutputI2S           i2s1;           //xy=1117.005615234375,343
 AudioConnection          patchCord1(waveform1, 0, mixer1, 0);
@@ -36,15 +49,16 @@ AudioConnection          patchCord8(filter1, 0, envelope1, 0);
 AudioConnection          patchCord9(mixer2, 0, wet_dry_mixer, 0);
 AudioConnection          patchCord10(mixer2, 0, delay_mixer, 0);
 AudioConnection          patchCord11(envelope1, 0, mixer2, 0);
-AudioConnection          patchCord12(delay_mixer, 0, wet_dry_mixer, 1);
-AudioConnection          patchCord13(delay_mixer, delay1);
-AudioConnection          patchCord14(delay1, 0, delay_mixer, 1);
-AudioConnection          patchCord15(wet_dry_mixer, amp1);
-AudioConnection          patchCord16(amp1, 0, i2s1, 0);
-AudioConnection          patchCord17(amp1, 0, i2s1, 1);
+AudioConnection          patchCord12(delay1, 0, delay_mixer, 1);
+AudioConnection          patchCord13(delay1, 1, freeverb1, 0);
+AudioConnection          patchCord14(delay_mixer, 0, wet_dry_mixer, 1);
+AudioConnection          patchCord15(delay_mixer, delay1);
+AudioConnection          patchCord16(wet_dry_mixer, amp1);
+AudioConnection          patchCord17(freeverb1, 0, wet_dry_mixer, 2);
+AudioConnection          patchCord18(amp1, 0, i2s1, 0);
+AudioConnection          patchCord19(amp1, 0, i2s1, 1);
 AudioControlSGTL5000     sgtl5000_1;     //xy=978.0056762695312,94
 // GUItool: end automatically generated code
-
 
 
 
@@ -81,7 +95,7 @@ void setup() {
   // The audio library uses blocks of a set size so this is not a percentage or kilobytes, just a kind of arbitrary number.
   // On our Teensy 4.1 we can go up to about 1900 but that won't leave any RAM for anyone else.
   // Most objects only need a single block. It's usually the delay and reverb that hog it.
-  AudioMemory(400);
+  AudioMemory(1000);
 
   sgtl5000_1.enable(); //Turn the adapter board on
   sgtl5000_1.inputSelect(AUDIO_INPUT_LINEIN); //Tell it what input we want to use. Not necessary is you're not using the ins
@@ -145,9 +159,11 @@ void setup() {
 
   delay1.delay(0, 500);
 
-
   delay_mixer.gain(0, .7); //from voice and drums
   delay_mixer.gain(1, .3); //feedback
+
+  freeverb1.roomsize(.5); //0-1.0
+  freeverb1.damping(.5); //0.1.0 with 1 severely reducing high frequencies
 
 } //setup is over
 
@@ -155,20 +171,22 @@ void loop() {
   current_time = millis();
 
   delay_mixer.gain(1, potRead(0));
-  delay1.delay(0, potRead(7) * 500.0);
+  float dt = potRead(7) * 500.0;
+  delay1.delay(0, dt);
+  delay1.delay(1, dt * .8);
 
-  float dry = potRead(6);
-  float wet = map(dry, 0, 1.0, 1.0, 0); //or 1.0 - dry;
+
+  float dry = map(potRead(6), 0, 1.0, .6, 0);
+  float wet = map(potRead(6), 0, 1.0, 0, .6);
   wet_dry_mixer.gain(0, dry);
   wet_dry_mixer.gain(1, wet);
+  wet_dry_mixer.gain(2, .4);
 
-  //int note_shift =  potRead(0) * 50.0;
-  int note_shift = 30;
+
   int seq1_rate =  potRead(1) * 500.0;
 
-  //mod_offset = potRead(7) * 15;
-  mod_offset = 7;
 
+//note used
   freq1 = chromatic[note_shift + note_shift]; //set the frequency using the button's "i"
   freq2 = chromatic[note_sel + note_shift] * 2.0;
   waveform1.frequency(freq1);
@@ -178,7 +196,7 @@ void loop() {
     buttons[i].update();
   }
 
-  if (buttons[0].fell()) { 
+  if (buttons[0].fell()) {
     envelope1.noteOn(); //start the attack section of the envelope
   }
   if (buttons[0].rose()) {
@@ -187,18 +205,18 @@ void loop() {
 
   if (buttons[1].fell()) {
     seq_mode++;
-    if (seq_mode > 1) {
+    if (seq_mode > 1) { //only 2 modes right now, 0 and 1 but easily expandable
       seq_mode = 0;
     }
     if (seq_mode == 1) {
-      seq_index = 0;
-      prev_time[1] = 0;
+      seq_index = 0; //start at the first step of the sequence
+      prev_time[1] = 0; //make is so the seq timing iff happens this loop
     }
 
   }
 
 
-
+//this is being used
   amp1.gain(potRead(3));
 
   cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
@@ -228,14 +246,14 @@ void loop() {
         drum1.noteOn();
       }
 
-      seq_index = seq_index + 1;
+      seq_index = seq_index + 1;  //we want to increment AFTER we play the sounds so we play the first step before advancing
 
       if (seq_index > 15) {
         seq_index = 0;
       }
 
     }
-    //Serial.println(mod_index);
+
   }
 
   if (current_time - prev_time[0] > 500) {

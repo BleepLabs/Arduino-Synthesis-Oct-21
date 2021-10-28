@@ -1,5 +1,6 @@
-//Keys play different notes using an envelope
-// Pot0 controls key to play at all times
+//Two arrays play two different sounds 
+// pot 1 is rate
+// pot 7 changes the rhythm of the drum 
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -191,7 +192,7 @@ void loop() {
       drum1.noteOn();
     }
     else {
-      mod_index = (seq_index + mod_offset) % 15;
+      mod_index = (seq_index + mod_offset) % 15; //this makes only a section of the array play, not just 0-15. modulo info https://www.arduino.cc/en/pmwiki.php?n=Reference/Modulo
       drum1.frequency(seq2[mod_index]);
       drum1.noteOn();
     }

@@ -1,5 +1,4 @@
-//Keys play different notes using an envelope
-// Pot0 controls key to play at all times
+// Single sound sequencer using the same setup as before but adding white noise
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -99,13 +98,9 @@ void setup() {
   // .5 would be half volume and 2 would be double
   // -1.0 would mean the same volume but the signal is upside down, aka 180 degrees out of phase
 
-  //Since we have two oscillators coming in that are already "1" We should take them down by half so we don't clip.
-  // If you go over "1" The top or bottom of the wave is just slammed against a wall
   mixer1.gain(0, 0); //wave1
   mixer1.gain(1, 0); //wave2
-  mixer1.gain(2, .3); //pink1
-  //the other channels of the mixer aren't used so don't need to be set
-  //This really isn't necessary since we're changing them in the loop but it's here for reference
+  mixer1.gain(2, .3); //noise1
 
   //envelope info https://www.pjrc.com/teensy/gui/?info=AudioEffectEnvelope
   envelope1.attack(1); //time in milliseconds
@@ -113,7 +108,7 @@ void setup() {
   envelope1.sustain(0); //amplitude 0-1.0
   envelope1.release(1000);//time in milliseconds
 
-  noise1.amplitude(1);
+  noise1.amplitude(1); //turn the noise on
 } //setup is over
 
 void loop() {
@@ -121,8 +116,8 @@ void loop() {
   int note_shift =  potRead(0) * 50.0;
   int seq1_rate =  potRead(1) * 500.0;
   
-
-  freq1 = chromatic[note_shift + note_shift]; //set the frequency using the button's "i"
+  //all this is still here but we don't hear the oscillators anymore
+  freq1 = chromatic[note_shift + note_shift];
   freq2 = chromatic[note_sel + note_shift] * 2.0;
   waveform1.frequency(freq1);
   waveform2.frequency(freq2);
@@ -139,13 +134,6 @@ void loop() {
     }
   }
 
-  // freq1 = (potRead(0) * 500.0) + 100.0; //add and multiply by floats to make sure the output is a float
-  // freq2 = (potRead(1) * 500.0) + 100.0;
-
-
-  //mixer1.gain(0, .22); //resonance adds a lot of volume to a small band of frequencies so we need to turn the input into it down
-  // mixer1.gain(1, .22);
-
   amp1.gain(potRead(3));
 
   cuttoff_freq = map(potRead(2), 0, 1.0, 0, 15000.0);
@@ -161,16 +149,15 @@ void loop() {
   
   if (current_time - prev_time[1] > seq1_rate) {
     prev_time[1] = current_time;
-    seq_index = seq_index + 1;
+    seq_index = seq_index + 1; 
     if (seq_index > 15) {
-      seq_index = 0;
+      seq_index = 0; 
     }
 
-    if (seq1[seq_index]==1){
-      envelope1.noteOn();
+    if (seq1[seq_index]==1){ //we step through the array and play a note if it's 1
+      envelope1.noteOn(); //usually we need a corresponding note off but we're only using the attack and decay portions 
     }
     
-
   }
 
   if (current_time - prev_time[0] > 500) {
