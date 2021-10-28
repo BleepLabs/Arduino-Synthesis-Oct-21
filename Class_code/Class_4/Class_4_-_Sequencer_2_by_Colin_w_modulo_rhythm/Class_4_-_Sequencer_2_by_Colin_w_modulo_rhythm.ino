@@ -60,6 +60,8 @@ int seq1[16] = {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0};
 int seq2[16] = {0, 0, 220, 0, 0, 0, 440, 0, 220, 0, 0, 0, 880, 0, 0, 0};
 
 int seq_index;
+int mod_offset;
+int mod_index;
 
 void setup() {
 
@@ -139,6 +141,7 @@ void loop() {
   int note_shift =  potRead(0) * 50.0;
   int seq1_rate =  potRead(1) * 500.0;
 
+  mod_offset = potRead(7) * 15;
 
   freq1 = chromatic[note_shift + note_shift]; //set the frequency using the button's "i"
   freq2 = chromatic[note_sel + note_shift] * 2.0;
@@ -182,18 +185,20 @@ void loop() {
       envelope1.noteOn();
     }
 
-    int offset = potRead(7) * 15;
+
     if (seq2[seq_index] > 0) {
       drum1.frequency(seq2[seq_index]);
       drum1.noteOn();
     }
     else {
-      drum1.frequency(seq2[(seq_index + offset) % 15]);
+      mod_index = (seq_index + mod_offset) % 15;
+      drum1.frequency(seq2[mod_index]);
       drum1.noteOn();
     }
+    Serial.println(mod_index);
   }
 
-  if (current_time - prev_time[0] > 500) {
+  if (current_time - prev_time[0] > 500 && 0) {
     prev_time[0] = current_time;
 
     Serial.println(seq1_rate);
