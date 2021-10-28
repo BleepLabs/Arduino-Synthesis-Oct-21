@@ -83,7 +83,7 @@ void setup() {
   // The audio library uses blocks of a set size so this is not a percentage or kilobytes, just a kind of arbitrary number.
   // On our Teensy 4.1 we can go up to about 1900 but that won't leave any RAM for anyone else.
   // Most objects only need a single block. It's usually the delay and reverb that hog it.
-  AudioMemory(400);
+  AudioMemory(1000);
 
   sgtl5000_1.enable(); //Turn the adapter board on
   sgtl5000_1.inputSelect(AUDIO_INPUT_LINEIN); //Tell it what input we want to use. Not necessary is you're not using the ins
