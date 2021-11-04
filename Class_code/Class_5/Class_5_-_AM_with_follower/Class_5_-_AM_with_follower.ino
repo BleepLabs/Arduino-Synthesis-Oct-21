@@ -1,4 +1,5 @@
-//Using the Teensy audio library to make sound
+//Audio input with AM modulation
+// envelope follower using peak
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -98,32 +99,35 @@ void loop() {
 
   for (int i = 0; i < 8; i = i + 1)  {
     buttons[i].update();
-  }
-
+  } 
+  //Pot 0 sets the base frequency
+  // Then the follower is added to it but can be attenuated with pot 1
   freq1 = (potRead(0) * 1000.0) + (follower1 * 1000.0 * potRead(1)); //add and multiply by floats to make sure the output is a float
   waveform1.frequency(freq1); //change the pitch of the oscillator
 
   amp1 = potRead(4); //returns 0-1.0 already
 
   mixer1.gain(0, amp1); //wet
-  mixer1.gain(1, 0); //dry
-  mixer1.gain(2, 1.0-amp1); //
+  mixer1.gain(1, 1.0-amp1); //dry
+  mixer1.gain(2, 0); //output of waveform1
   
   if (peak1.available()) {
     peak1_reading = peak1.read();
   }
-
+  //Rather than using the peak reading directly, we can follow it 
+  // When the incoming audio goes above the follower, it jumps up immediately
+  // When the incoming audio drops again, the follower takes time to fade out
   if (follower1 < peak1_reading) {
     follower1 = peak1_reading;
   }
   if (follower1 > peak1_reading) {
-    //follower1-=.0001;
-    follower1*=.9999;
+    //follower1-=.0001;  //linear
+    follower1*=.999;  //exponential 
   }
 
   if (current_time - prev_time[1] > 33) {
     prev_time[1] = current_time;
-    Serial.print(peak1_reading*100.0);
+    Serial.print(peak1_reading*100.0); //*100.0 so it's easier to see in the monitor
     Serial.print(" ");
     Serial.println(follower1*100.0);
     set_LED(0, .3, 1, peak1_reading);

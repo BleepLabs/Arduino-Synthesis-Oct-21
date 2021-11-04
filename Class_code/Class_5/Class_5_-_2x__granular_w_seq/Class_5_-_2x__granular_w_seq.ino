@@ -1,5 +1,5 @@
-//Using the granual effect
-//Capture small pieces of audio and repeat and play them at differnt rates.
+//Using the granular effect
+//Capture small pieces of audio and repeat and play them at different rates.
 // This was an early library I did and got changes a lot by Paul
 // so it's got it's issues but works ok
 
@@ -44,7 +44,7 @@ float amp1, amp2; //you can also declare variables like this. Both will be float
 float grain_length;
 float grain_speed;
 
-int16_t granular1_array[32000]; //that's the max the granular libray can use
+int16_t granular1_array[32000]; //that's the max the granular library can use
 int16_t granular2_array[32000];
 
 int seq1[8] = {1, 0, 1, 0, 0, 0, 0, 0};
@@ -112,10 +112,11 @@ void loop() {
 
   grain_length = (potRead(0) * 700.0); //32000 samples is about 700 millis
   grain_speed = (potRead(1) * 4.0);
-  granular1.setSpeed(grain_speed); //resposed to .125 to 8. 1 is regular speed
+  granular1.setSpeed(grain_speed); //responds to .125 to 8. 1 is regular speed
   granular2.setSpeed(grain_speed);
 
   amp1 = potRead(2); //returns 0-1.0 already
+  //Using the mixer setting in setup
 //  mixer1.gain(0, amp1); //dry
 //  mixer1.gain(1, 1.0 - amp1); //granular 1
 //  mixer1.gain(2, 1.0 - amp1); //granular 1
@@ -130,11 +131,11 @@ void loop() {
       note_state1 = !note_state1;
     }
     if (note_state1 == 1) {
-      string1.noteOn(random(100, 500), .5);
+      string1.noteOn(random(100, 500), .5); //pitch, velocity aka amplitude 0-1.0
       granular2.beginFreeze(grain_length);
     }
     if (note_state1 == 0) {
-      string1.noteOff(.5);
+      string1.noteOff(.5); //for stings you need to set a stop velocity aka amplitude
       granular2.stop();
     }
   }

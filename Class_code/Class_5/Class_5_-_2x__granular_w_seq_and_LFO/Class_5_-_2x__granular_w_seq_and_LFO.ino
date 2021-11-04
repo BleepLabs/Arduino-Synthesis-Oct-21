@@ -2,6 +2,8 @@
 //Capture small pieces of audio and repeat and play them at differnt rates.
 // This was an early library I did and got changes a lot by Paul
 // so it's got it's issues but works ok
+//Using a wavefrom osc and a peak as an LFO
+
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -18,20 +20,21 @@ AudioEffectGranular      granular2;      //xy=298,310
 AudioSynthKarplusStrong  string1;        //xy=300,373
 AudioEffectGranular      granular1;      //xy=310,249
 AudioAnalyzePeak         peak1;          //xy=394,478
-AudioMixer4              mixer1;         //xy=505,280
+AudioSynthWaveformModulated waveformMod1;   //xy=436,546
+AudioMixer4              mixer1;         //xy=539,300
 AudioOutputI2S           i2s1;           //xy=778,180
 AudioConnection          patchCord1(i2s2, 0, granular1, 0);
 AudioConnection          patchCord2(i2s2, 0, mixer1, 0);
 AudioConnection          patchCord3(i2s2, 0, granular2, 0);
 AudioConnection          patchCord4(waveform1, peak1);
-AudioConnection          patchCord5(granular2, 0, mixer1, 2);
-AudioConnection          patchCord6(string1, 0, mixer1, 3);
+AudioConnection          patchCord5(waveform1, 0, waveformMod1, 0);
+AudioConnection          patchCord6(granular2, 0, mixer1, 2);
 AudioConnection          patchCord7(granular1, 0, mixer1, 1);
-AudioConnection          patchCord8(mixer1, 0, i2s1, 0);
-AudioConnection          patchCord9(mixer1, 0, i2s1, 1);
+AudioConnection          patchCord8(waveformMod1, 0, mixer1, 3);
+AudioConnection          patchCord9(mixer1, 0, i2s1, 0);
+AudioConnection          patchCord10(mixer1, 0, i2s1, 1);
 AudioControlSGTL5000     sgtl5000_1;     //xy=741,413
 // GUItool: end automatically generated code
-
 
 
 
@@ -85,12 +88,16 @@ void setup() {
 
   granular1.begin(granular1_array, 32000); //array, max_length
   granular2.begin(granular2_array, 32000);
-  waveform1.begin(1, .1, WAVEFORM_SINE);
+  waveform1.begin(1, .1, WAVEFORM_TRIANGLE_VARIABLE);
+  waveform1.pulseWidth(.2);
+  waveformMod1.begin(1, 110, WAVEFORM_SINE);
+  waveformMod1.frequencyModulation(4);
+
 
   mixer1.gain(0, 0); //from audio input
   mixer1.gain(1, 0); //from granular1 effect
-  mixer1.gain(2, .3); //from granular2 effect
-  mixer1.gain(3, 0);  //string1
+  mixer1.gain(2, 0); //from granular2 effect
+  mixer1.gain(3, 1);  //modwavefom1
 } //setup is over
 
 void loop() {
@@ -117,19 +124,19 @@ void loop() {
   if (buttons[2].fell()) {
     granular1.stop();  //stop eiter effect
   }
-
+  //The pot will set the depth of the lfo, when it's one the lfo will take it from 0-700 
   grain_length = (potRead(0) * 700.0 * lfo1); //32000 samples is about 700 millis
   grain_speed = (potRead(1) * lfo1 * 4);
-  granular1.setSpeed(grain_speed); //resposed to .125 to 8. 1 is regular speed
+  granular1.setSpeed(grain_speed); //responds to .125 to 8. 1 is regular speed
   granular2.setSpeed(grain_speed);
 
   amp1 = potRead(2); //returns 0-1.0 already
   //  mixer1.gain(0, amp1); //dry
   //  mixer1.gain(1, 1.0 - amp1); //granular 1
   //  mixer1.gain(2, 1.0 - amp1); //granular 1
-
+  waveform1.frequency(potRead(7)*2000.0);
   if (current_time - prev_time[2] > 500) {
-    prev_time[2] = current_time;
+  prev_time[2] = current_time;
     index1++;
     if (index1 > 7) {
       index1 = 0;
@@ -148,14 +155,14 @@ void loop() {
   }
 
   if (current_time - prev_time[1] > 1000) {
-    prev_time[1] = current_time;
+  prev_time[1] = current_time;
     granular1.beginFreeze(grain_length);
 
   }
 
 
   if (current_time - prev_time[0] > 500) {
-    prev_time[0] = current_time;
+  prev_time[0] = current_time;
 
     //Here we print out the usage of the audio library
     // If we go over 90% processor usage or get near the value of memory blocks we set aside in the setup we'll have issues or crash.

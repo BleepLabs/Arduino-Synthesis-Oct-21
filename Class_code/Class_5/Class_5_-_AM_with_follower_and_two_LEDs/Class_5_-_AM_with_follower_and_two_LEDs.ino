@@ -1,4 +1,6 @@
-//Using the Teensy audio library to make sound
+//Audio input with AM modulation
+// envelope follower using peak
+// LEDs light up with input and follower
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch

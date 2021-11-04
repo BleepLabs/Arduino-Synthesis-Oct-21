@@ -1,4 +1,6 @@
-//Using the Teensy audio library to make sound
+//Audio input with AM modulation
+// envelope follower using peak
+// Reverb with feedback
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -97,13 +99,9 @@ void setup() {
 
   mixer2.gain(0, .5); //reverb
   mixer1.gain(1, .5); //dry 
-  mixer1.gain(2, 0);
-  mixer1.gain(3, .5);
 
-  freeverb1.roomsize(1.0);
-  freeverb1.damping(0);
-  //the other channels of the mixer aren't used so don't need to be set
-  //This really isn't necessary since we're changing them in the loop but it's here for reference
+  freeverb1.roomsize(1.0); //size of room from 0-1.0
+  freeverb1.damping(0); //1.0 will filter out high frequencies. 0 will not
 
 } //setup is over
 
@@ -131,6 +129,7 @@ void loop() {
   if (peak1.available()) {
     prev_peak1_reading;
     peak1_reading = peak1.read();
+    //Play a drum when the input crosses a threshold. This donet work well since it can do this many times a seconds but the idea is there
     if (prev_peak1_reading < .5 && peak1_reading > .5) {
       drum1.frequency(random(100,500));
       drum1.pitchMod(.3);
