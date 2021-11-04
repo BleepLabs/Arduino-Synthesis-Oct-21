@@ -9,24 +9,29 @@
 #include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
-AudioInputI2S            i2s2;           //xy=152.33332061767578,236.5
-AudioSynthWaveform       waveform1;      //xy=173.66666412353516,381.6666564941406
+AudioInputI2S            i2s2;           //xy=114.33332061767578,212.5
+AudioSynthWaveform       waveform1;      //xy=121.66665649414062,143.66665649414062
+AudioSynthSimpleDrum     drum1;          //xy=288,399
 AudioAnalyzePeak         peak1;          //xy=335,111
-AudioEffectMultiply      multiply1;      //xy=367.5,277.5
-AudioMixer4              mixer1;         //xy=552.6666717529297,206.8333282470703
-AudioOutputI2S           i2s1;           //xy=838,206
+AudioEffectMultiply      multiply1;      //xy=378.5,181.5
+AudioMixer4              mixer1;         //xy=569.6666870117188,256.8333282470703
+AudioEffectFreeverb      freeverb1;      //xy=736,196
+AudioMixer4              mixer2;         //xy=890,266
+AudioOutputI2S           i2s1;           //xy=919,150
 AudioConnection          patchCord1(i2s2, 0, multiply1, 0);
 AudioConnection          patchCord2(i2s2, 0, mixer1, 1);
 AudioConnection          patchCord3(i2s2, 0, peak1, 0);
 AudioConnection          patchCord4(waveform1, 0, multiply1, 1);
-AudioConnection          patchCord5(waveform1, 0, mixer1, 2);
+AudioConnection          patchCord5(drum1, 0, mixer1, 3);
 AudioConnection          patchCord6(multiply1, 0, mixer1, 0);
-AudioConnection          patchCord7(mixer1, 0, i2s1, 0);
-AudioConnection          patchCord8(mixer1, 0, i2s1, 1);
+AudioConnection          patchCord7(mixer1, freeverb1);
+AudioConnection          patchCord8(mixer1, 0, mixer2, 1);
+AudioConnection          patchCord9(freeverb1, 0, mixer2, 0);
+AudioConnection          patchCord10(mixer2, 0, i2s1, 0);
+AudioConnection          patchCord11(mixer2, 0, i2s1, 1);
+AudioConnection          patchCord12(mixer2, 0, mixer1, 2);
 AudioControlSGTL5000     sgtl5000_1;     //xy=781,379
 // GUItool: end automatically generated code
-
-
 
 
 #include "bleep_base.h" //Contains functions we'll need when using the bleep base
@@ -39,7 +44,7 @@ float freq2;
 float amp1, amp2; //you can also declare variables like this. Both will be floats
 float peak1_reading;
 float follower1;
-
+float prev_peak1_reading;
 void setup() {
 
   start_bleep_base(); //Gets the LEDs, pots, and buttons ready
@@ -85,9 +90,18 @@ void setup() {
 
   //Since we have two oscillators coming in that are already "1" We should take them down by half so we don't clip.
   // If you go over "1" The top or bottom of the wave is just slammed against a wall
-  mixer1.gain(0, 0); //et from multiply
+  mixer1.gain(0, .5); //wet from multiply
   mixer1.gain(1, 0); //dry input
-  mixer1.gain(2, 1);
+  mixer1.gain(2, .2); //final freednack
+  mixer1.gain(3, .5); //drum
+
+  mixer2.gain(0, .5); //reverb
+  mixer1.gain(1, .5); //dry 
+  mixer1.gain(2, 0);
+  mixer1.gain(3, .5);
+
+  freeverb1.roomsize(1.0);
+  freeverb1.damping(0);
   //the other channels of the mixer aren't used so don't need to be set
   //This really isn't necessary since we're changing them in the loop but it's here for reference
 
@@ -105,27 +119,40 @@ void loop() {
 
   amp1 = potRead(4); //returns 0-1.0 already
 
-  mixer1.gain(0, amp1); //wet
-  mixer1.gain(1, 0); //dry
-  mixer1.gain(2, 1.0-amp1); //
-  
+  mixer1.gain(0, .5); //wet from multiply
+  mixer1.gain(1, 0); //dry input
+  mixer1.gain(2, potRead(5)); //final feedback
+  mixer1.gain(3, .5); //drum
+
+  mixer2.gain(0, amp1); //reverb
+  mixer1.gain(1, 1.0-amp1); //dry 
+
+
   if (peak1.available()) {
+    prev_peak1_reading;
     peak1_reading = peak1.read();
+    if (prev_peak1_reading < .5 && peak1_reading > .5) {
+      drum1.frequency(random(100,500));
+      drum1.pitchMod(.3);
+      drum1.length(250);
+      drum1.noteOn();
+    }
   }
+
 
   if (follower1 < peak1_reading) {
     follower1 = peak1_reading;
   }
   if (follower1 > peak1_reading) {
     //follower1-=.0001;
-    follower1*=.998;
+    follower1 *= .998;
   }
 
   if (current_time - prev_time[1] > 33) {
     prev_time[1] = current_time;
-    Serial.print(peak1_reading*100.0);
+    Serial.print(peak1_reading * 100.0);
     Serial.print(" ");
-    Serial.println(follower1*100.0);
+    Serial.println(follower1 * 100.0);
     set_LED(0, .3, 1, peak1_reading);
     set_LED(1, .6, 1, follower1);
     LEDs.show();
