@@ -43,9 +43,11 @@ int string_threshold = 300;
 int drum_threshold = 100;
 int drum_flag, string_flag;
 int drum_off;
-#define array_size 20
+
+#define array_size 5 //a define isn't a variable. You can use it set the size an array, unlike a variable
 int photocell_read_array[array_size];
 int photocell_read_array_index;
+int lockout_length = 25;
 unsigned long drum_flag_time;
 unsigned long string_time;
 int pot_switch1;
@@ -119,6 +121,10 @@ void loop() {
 
   pot_switch1 = potRead(2) * 3.0;
 
+  //we increment the index and put a new reading in ever 5 millis here.
+  // so for array_size = 5, that's 20 millis between the oldest and newest readings
+  // that means out locout time shopuld be at least that;
+
   if (current_time - prev_time[2] > 5 && 1) {
     prev_time[2] = current_time;
 
@@ -128,6 +134,8 @@ void loop() {
     }
     photocell_read_array[photocell_read_array_index] = photocell_read;
     photocell_read = analogRead(A8);
+
+    //the oldest value in the array is the index+1 but its can't go over the size of the array
     int index2 = photocell_read_array_index + 1;
     if (index2 > array_size - 1) {
       index2 -= array_size;
@@ -135,43 +143,51 @@ void loop() {
     prev_photocell_read = photocell_read_array[index2];
 
     if (photocell_read > drum_threshold && prev_photocell_read < drum_threshold) {
-      if (current_time - drum_flag_time > 200) {
+      //we don't want the sound to trigger again as this if will be true for more than one loop
+      if (current_time - drum_flag_time > lockout_length) { //lockout_length is set to 25 at the top
         drum_flag = 1;
         drum_flag_time = current_time;
       }
     }
+  }
 
-    if (drum_flag == 1) {
-      if (pot_switch1 == 0) {
-        drum1.frequency(220);
-        int r1 = random(2);
-        if (r1 == 0) {
-          drum1.length(250);
-        }
-        if (r1 >= 1) {
-          drum1.length(500);
-        }
-        drum1.pitchMod(.3);
-        drum1.noteOn();
+  //using "flags" we can seperate parts of code
+  // we could also have multiple actions trigger this flag, such as a button or whatever
+  if (drum_flag == 1) {
+    if (pot_switch1 == 0) {
+      drum1.frequency(220);
+      int r1 = random(2);
+      if (r1 == 0) {
+        drum1.length(250);
       }
-
-      if (pot_switch1 == 1) {
-        string1.noteOn(220.0, .8);
-        string_time = current_time;
-        string_flag = 1;
+      if (r1 >= 1) {
+        drum1.length(500);
       }
-      drum_flag = 0;
+      drum1.pitchMod(.3);
+      drum1.noteOn();
     }
+
+    if (pot_switch1 == 1) {
+      string1.noteOn(220.0, .8);
+      string_time = current_time;
+      string_flag = 1;
+    }
+    //turn it off so it won't happen again next loop
+    // this if is in the bottom of the loop so it could repeat very quickly 
+    drum_flag = 0; 
   }
 
-  if (current_time - string_time > 20 && string_flag == 1) {
+  //For a object that has a note on and off, we need to remeber the ime we turned it on
+  // then turn it off a little later 
+  if (current_time - string_time > 250 && string_flag == 1) {
     string1.noteOff(.8);
-    string_flag = 0;
+    string_flag = 0; //so this won't repeat 
   }
 
 
-  if (current_time - prev_time[1] > 20 && 1) {
+  if (current_time - prev_time[1] > 20 && 1) { //&& 1 menas it will happen
     prev_time[1] = current_time;
+    //to print multiple things in the serial plotter put a space between them and an println at the end
     Serial.print(pot_switch1);
     Serial.print(" ");
     Serial.print(photocell_read);
@@ -181,7 +197,7 @@ void loop() {
     Serial.println(drum_threshold);
   }
 
-  if (current_time - prev_time[0] > 500 && 0) {
+  if (current_time - prev_time[0] > 500 && 0) { //&&0 means it won't happen
     prev_time[0] = current_time;
 
     //Here we print out the usage of the audio library

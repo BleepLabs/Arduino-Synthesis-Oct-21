@@ -1,7 +1,8 @@
-//Using the granual effect
-//Capture small pieces of audio and repeat and play them at differnt rates.
-// This was an early library I did and got changes a lot by Paul
-// so it's got it's issues but works ok
+/*
+anything can be modulated, aka controlled, with a sequence
+arpeggiator just means one type of control using specific note freqs to modulat oscillators
+here a sequence is used to control granular freeze
+*/
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -105,14 +106,15 @@ void loop() {
   mixer1.gain(0, amp1); //dry
   mixer1.gain(1, 1.0 - amp1); //wet
 
-
+  //freeze ever 1/4 of a second
   if (current_time - prev_time[1] > 250) {
     prev_time[1] = current_time;
     index1++;
-    index1 %= 4;
-    
+    index1 %= 4; //fast way of saying if it's over 3 go back to 0. Modulo aka remainder https://www.arduino.cc/reference/en/language/structure/arithmetic-operators/remainder/ 
+
+    //get the speed from the sequence and change it with a pot
     granular1.setSpeed(speed_array[index1]*grain_speed);
-    granular1.beginFreeze(grain_length);
+    granular1.beginFreeze(grain_length); //lenght is set at begin, can't be changed dueing freeze
   }
 
   if (current_time - prev_time[0] > 500) {

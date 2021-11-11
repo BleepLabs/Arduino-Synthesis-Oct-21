@@ -1,4 +1,4 @@
-//Playing notes in different scales
+//serial and parallel filters 
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -77,6 +77,7 @@ int button_sel;
 int gate_enable;
 float detune;
 int arp_sel;
+
 void setup() {
 
   start_bleep_base(); //Gets the LEDs, pots, and buttons ready
@@ -150,21 +151,26 @@ void loop() {
   rate1 = potRead(1) * 1000.0;
   gate_length = rate1 * .5;
 
+  //filter 1 is low pass which feeds into 2, a highpass, making and adjustable bandpass
   filter1.frequency(potRead(4) * 13000.0);
   filter2.frequency(potRead(5) * 13000.0);
   filter1.resonance(3.0);
   filter2.resonance(3.0);
 
+  //the ladder filter is only lopass and has a much more pronounced resonance
   ladder1.frequency(potRead(4) * 13000.0);
   ladder1.resonance(potRead(6) * 10.0);
-  mixer1.gain(3, 0);
+  
 
-  mixer2.gain(0, potRead(3));
-  mixer2.gain(1, potRead(7));
-  mixer2.gain(2, potRead(2));
-
+  mixer2.gain(0, potRead(3)); //bandpass feedback 
+  
+  mixer2.gain(1, potRead(7)); //dry signal
+  mixer2.gain(2, potRead(2)); //bandpass
+  mixer1.gain(3, 0); //ladder low pass
   //detune = (potRead(4) * .1) + 1.0;
 
+  //the rest is from the previous arppegiator code 
+    
   for (int i = 0; i < 8; i = i + 1)  {
     buttons[i].update();
 
@@ -180,6 +186,7 @@ void loop() {
       envelope1.noteOff();
     }
   }
+
 
   if (current_time - prev_time[1] > rate1) {
     prev_time[1] = current_time;

@@ -1,4 +1,5 @@
-//Playing notes in different scales
+//playing sequences of notes aka arpeggios 
+// here we change the order the scales are played back
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -47,6 +48,7 @@ const static int pentatonic[51] = {0, 3, 5, 7, 10, 12, 15, 17, 19, 22, 24, 27, 2
 const static int locrian[71] = {0, 1, 3, 5, 6, 8, 10, 12, 13, 15, 17, 18, 20, 22, 24, 25, 27, 29, 30, 32, 34, 36, 37, 39, 41, 42, 44, 46, 48, 49, 51, 53, 54, 56, 58, 60, 61, 63, 65, 66, 68, 70, 72, 73, 75, 77, 78, 80, 82, 84, 85, 87, 89, 90, 92, 94, 96, 97, 99, 101, 102, 104, 106, 108, 109, 111, 113, 114, 116, 118, 120};
 
 int arp_order_index;
+//2d array. think of it as first number slects the y axis and second is x axis 
 int arp_order[4][4] = {
   {2, -1, 2, -1},
   {2, 3, -4, 1},
@@ -176,11 +178,13 @@ void loop() {
         arp_order_index = 0;
       }
 
+      //instead of just adding one, we add what's in the array
       scale_index = scale_index + arp_order[arp_sel][arp_order_index];
       if (scale_index > 13) {
         //gate_enable = 0;
         scale_index = 0;
       }
+      //make sure it dones't go under 0 and crash 
       if (scale_index < 0) {
         scale_index = 0;
       }

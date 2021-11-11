@@ -1,4 +1,4 @@
-//Playing notes in different scales
+//playing sequences of notes aka arpeggios 
 
 // The block below is copied from the design tool: https://www.pjrc.com/teensy/gui/
 // "#include" means add another file to our sketch
@@ -124,15 +124,15 @@ void loop() {
     buttons[i].update();
 
     if (buttons[i].fell()) {
-      gate_enable = 1;
-      button_sel = i;
-      scale_index = 0;
-      prev_time[1] = 0;
+      gate_enable = 1; 
+      button_sel = i; 
+      scale_index = 0; //reset this so it starts at the beginning
+      prev_time[1] = 0; //makes it so the timing if happens immediately 
     }
 
     if (buttons[i].rose()) {
       gate_enable = 0;
-      envelope1.noteOff();
+      envelope1.noteOff(); //just to make sure it turns off 
     }
   }
 
@@ -150,16 +150,16 @@ void loop() {
       if (scale_pot > 1) {
         note1 = pentatonic[scale_index];
       }
-
-      freq1 = chromatic[note1 + 48 + button_sel]; //note 48 is c3
+      int final_note = note1 + 48 + button_sel; //note 48 is c3. all of these combine together to select a single note
+      freq1 = chromatic[final_note]; //then we use it to get the frequency 
       env_flag = 1;
-      env_time = current_time;
+      env_time = current_time; //so we can turn off the envelope at a set time later
       waveform1.frequency(freq1);
       envelope1.noteOn();
 
       scale_index++;
       if (scale_index > 13) {
-        //gate_enable = 0;
+        //gate_enable = 0; //if this is enabled instead of the one in the buttons[].rose, the arp will turn off after it has played this length
         scale_index = 0;
       }
     }
