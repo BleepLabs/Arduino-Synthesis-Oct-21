@@ -113,8 +113,8 @@ void setup() {
   sampler1.frequency(1.0);
   delay1.begin(delay_bank, delay_bank_length, 0, 0, 2); //(delay bank, length, delay length, redux, lerp)
 
-  delay_mixer.gain(0, .6);
-  delay_mixer.gain(1, .4);
+  delay_mixer.gain(0, .5);
+  delay_mixer.gain(1, .5);
 
   wet_dry_mixer.gain(0, .5);
   wet_dry_mixer.gain(1, .5);
