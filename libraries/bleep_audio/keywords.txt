@@ -1,0 +1,15 @@
+bleep_audio 		KEYWORD2
+AudioEffectTapeDelay 		KEYWORD2
+sampleRate 		KEYWORD2
+lutSelect 		KEYWORD2
+length 		KEYWORD2
+shape 		KEYWORD2
+start_location 		KEYWORD2
+play_length 		KEYWORD2
+MemSampler 		KEYWORD2
+record 		KEYWORD2
+current_location 		KEYWORD2
+stop 		KEYWORD2
+freqOffset 		KEYWORD2
+reverse 		KEYWORD2
+AudioEffectEnvelopeAdjustable	KEYWORD2

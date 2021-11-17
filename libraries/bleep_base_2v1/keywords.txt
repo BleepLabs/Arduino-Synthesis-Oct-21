@@ -1,0 +1,12 @@
+bleep_base_2v1 		KEYWORD2
+start_bleep_base	KEYWORD2
+set_LED			KEYWORD2
+smooth			KEYWORD2
+fscale			KEYWORD2
+potRead 		KEYWORD2
+potReadRaw 		KEYWORD2
+pcellReadRaw 		KEYWORD2
+pcellRead 		KEYWORD2
+buttonState 		KEYWORD2
+buttonRead 		KEYWORD2
+setMaxBrightness 	KEYWORD2
