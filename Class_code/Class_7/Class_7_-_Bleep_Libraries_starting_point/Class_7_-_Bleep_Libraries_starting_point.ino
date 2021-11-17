@@ -2,6 +2,10 @@
   Using John-Mikes audio libraries
   you no longer have to have a tab with bleep_base.h in it, now it's just a regualr library
 
+  download libraries
+  bleep_base_2v1 https://downgit.github.io/#/home?url=https://github.com/BleepLabs/Arduino-Synthesis-Oct-21/tree/main/libraries/bleep_base_2v1
+  bleep_audio https://downgit.github.io/#/home?url=https://github.com/BleepLabs/Arduino-Synthesis-Oct-21/tree/main/libraries/bleep_audio
+  
   since my objects aren't in the tool you'll need to replace the names
   So you could use the delay object but change what's imported from:
   AudioEffectDelay delay1;
