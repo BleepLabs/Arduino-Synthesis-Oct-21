@@ -35,7 +35,7 @@ class MemSampler :
         len = 256;
       }
       psel = 32;
-      sample_len = len - 1; //you cant use sineof on a poniter to fine the size of waht it's pointing to
+      sample_len = len - 1; //you cant use sizeof on a poniter to fine the size of waht it's pointing to
       max_rec_len = len - 1;
       start_pos = 0;
       end_mod = len - 1;

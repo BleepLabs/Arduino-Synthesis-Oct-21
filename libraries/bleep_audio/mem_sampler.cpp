@@ -64,13 +64,13 @@ void MemSampler::update(void)
 
       if (index2 + index1 >= end_mod) {
         index2 = 0;
-        accumulator = 0;
+        accumulator = 1<<23;
         if (looping1 == 0) {
           mode = 0;
         }
       }
 
-      loc = index2 + index1;
+      loc = index2 + index1 + start_pos;
 
       int next = 1;
       if (rev == 1) {
