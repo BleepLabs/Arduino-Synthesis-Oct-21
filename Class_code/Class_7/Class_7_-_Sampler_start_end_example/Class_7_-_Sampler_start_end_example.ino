@@ -204,6 +204,8 @@ void loop() {
     Serial.print("%    Memory: ");
     Serial.print(AudioMemoryUsageMax());
     Serial.println();
+    Serial.println(rev_state);
+    Serial.println();
     AudioProcessorUsageMaxReset(); //We need to reset these values so we get a real idea of what the audio code is doing rather than just peaking in every half a second
     AudioMemoryUsageMaxReset();
   }
