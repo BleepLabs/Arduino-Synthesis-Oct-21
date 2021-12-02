@@ -128,6 +128,7 @@ void loop() {
   }
 
   for (int i = 0; i < 8; i = i + 1)  {
+    
     if (buttons[i].fell() && gate_enable == 0) {
       gate_enable = 1;
       button_sel = i;
